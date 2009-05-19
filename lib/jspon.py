@@ -9,9 +9,6 @@ def from_jspon(string, **args):
 # re.match(r'^(.*?(\[.*\])+)\.(.*)', 'foo[hello[foo].bar].bar').groups()
 
 def parse_jspon(string):
-    ids = {}
-    refs = []
-
     def traverse(v):
         if type(v) == list:
             for i in xrange(len(v)):
@@ -46,12 +43,26 @@ def parse_jspon(string):
                         refs.append((item, v))
                 
                 traverse(value)
+
+    def fill_in_refs(ids, refs):
+        for key, value in refs:
+            refval = value[key]['$ref']
+            if refval == '$':
+                value[key] = root
+                continue
+
+            try:
+                value[key] = ids[refval]
+            except KeyError:
+                raise RuntimeError("Invalid reference: %s" % (value[key]['$ref'],))
+
+
     obj = loads(string)
+    ids = {}
+    refs = []
+    root = obj
+
     traverse(obj)
     fill_in_refs(ids, refs)
     return obj
 
-def fill_in_refs(ids, refs):
-    for key, value in refs:
-        id = value[key]['$ref']
-        value[key] = ids[id]
