@@ -9,6 +9,11 @@ def from_jspon(string, **args):
 # re.match(r'^(.*?(\[.*\])+)\.(.*)', 'foo[hello[foo].bar].bar').groups()
 
 def parse_jspon(string):
+    """
+    Parse a JSON string with embedded JSPON references into a structure with
+    the appropriate references filled in.
+    """
+
     def traverse(v):
         if type(v) == list:
             for i in xrange(len(v)):
@@ -62,7 +67,11 @@ def parse_jspon(string):
     refs = []
     root = obj
 
+    # Walk the parsed structure and record occurances of "id" and "$ref"
     traverse(obj)
+
+    # Iterate over the list of references, replacing them with real
+    # references in their containing structure.
     fill_in_refs(ids, refs)
     return obj
 
